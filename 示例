@@ -1,0 +1,337 @@
+{
+  "employee_onboarding_process": {
+    "description": "整个员工入职的流程，从面试到培训完成。",
+    "process_steps": [
+      {
+        "step": "面试流程",
+        "process_ref": "interview_process",
+        "description": "完成候选人的面试评估",
+        "roles": [
+          {
+            "role": "HR管理员",
+            "permissions": ["管理面试流程"]
+          },
+          {
+            "role": "面试官",
+            "permissions": ["执行面试", "提交反馈"]
+          }
+        ]
+      },
+      {
+        "step": "入职文件提交和验证",
+        "process_ref": "document_submission_process",
+        "description": "收集并验证入职所需的文件",
+        "roles": [
+          {
+            "role": "HR管理员",
+            "permissions": ["审核提交的文件"]
+          },
+          {
+            "role": "新员工",
+            "permissions": ["提交入职所需文件"]
+          }
+        ]
+      },
+      {
+        "step": "员工培训流程",
+        "process_ref": "training_process",
+        "description": "完成新员工的入职培训",
+        "roles": [
+          {
+            "role": "培训管理员",
+            "permissions": ["安排培训", "管理培训材料"]
+          },
+          {
+            "role": "新员工",
+            "permissions": ["参加培训"]
+          }
+        ]
+      }
+    ],
+    "output": {
+      "employee_id": {
+        "type": "string",
+        "description": "成功入职的员工ID"
+      },
+      "onboarding_completed": {
+        "type": "boolean",
+        "description": "入职流程是否完成"
+      }
+    }
+  },
+  "interview_process": {
+    "input": {
+      "candidate_info": {
+        "type": "object",
+        "description": "候选人信息，包括个人信息、教育背景、工作经验等"
+      }
+    },
+    "process_steps": [
+      {
+        "step": "面试流程",
+        "description": "完成候选人的面试评估",
+        "roles": [
+          {
+            "role": "HR管理员",
+            "permissions": [
+              "创建面试",
+              "修改面试",
+              "查看所有面试反馈"
+            ]
+          },
+          {
+            "role": "面试官",
+            "permissions": [
+              "查看分配给自己的面试",
+              "提交面试反馈"
+            ]
+          }
+        ],
+        "ui_elements": [
+          {
+            "element": "面试安排表",
+            "description": "显示候选人面试的日期、时间和面试官信息",
+            "type": "table",
+            "actions": [
+              {
+                "action": "添加面试",
+                "description": "安排新的面试会议",
+                "authorized_roles": ["HR管理员"],
+                "fields": [
+                  {"field": "日期", "type": "date"},
+                  {"field": "时间", "type": "time"},
+                  {"field": "面试官", "type": "select", "options_source": "面试官列表"}
+                ]
+              },
+              {
+                "action": "修改面试",
+                "description": "更改现有面试会议的详细信息",
+                "authorized_roles": ["HR管理员"],
+                "fields": [
+                  {"field": "日期", "type": "date"},
+                  {"field": "时间", "type": "time"},
+                  {"field": "面试官", "type": "select", "options_source": "面试官列表"}
+                ]
+              }
+            ]
+          },
+          {
+            "element": "面试反馈表单",
+            "description": "收集面试官对候选人的评价和反馈",
+            "type": "form",
+            "authorized_roles": ["面试官"],
+            "fields": [
+              {"field": "技术能力评分", "type": "number", "min": 1, "max": 5, "description": "1到5的评分"},
+              {"field": "沟通能力评分", "type": "number", "min": 1, "max": 5, "description": "1到5的评分"},
+              {"field": "总体印象", "type": "textarea"},
+              {"field": "推荐结果", "type": "select", "options": ["推荐", "不推荐", "待定"]}
+            ]
+          }
+        ]
+      }
+    ],
+    "output": {
+      "interview_passed": {
+        "type": "boolean",
+        "description": "候选人是否通过面试"
+      }
+    },
+    "exceptions": [
+      {
+        "condition": "面试官缺席",
+        "action": "重新安排面试",
+        "output": {
+          "interview_rescheduled": "boolean"
+        },
+        "handled_by": ["HR管理员"]
+      }
+    ]
+  },
+  "document_submission_process": {
+    "input": {
+      "required_documents": {
+        "type": "array",
+        "description": "入职所需的文件列表"
+      }
+    },
+    "process_steps": [
+      {
+        "step": "文件验证",
+        "description": "收集并验证入职所需的文件",
+        "roles": [
+          {
+            "role": "HR管理员",
+            "permissions": [
+              "上传文件",
+              "验证文件"
+            ]
+          },
+          {
+            "role": "新员工",
+            "permissions": [
+              "上传文件"
+            ]
+          }
+        ],
+        "ui_elements": [
+          {
+            "element": "文件上传界面",
+            "description": "允许用户上传入职所需的文件",
+            "type": "upload",
+            "authorized_roles": ["新员工", "HR管理员"],
+            "actions": [
+              {
+                "action": "上传文件",
+                "description": "新员工上传所需的入职文件",
+                "fields": [
+                  {"field": "选择文件", "type": "file"}
+                ]
+              }
+            ]
+          },
+          {
+            "element": "文件验证界面",
+            "description": "HR管理员对上传的文件进行验证",
+            "type": "verification",
+            "authorized_roles": ["HR管理员"],
+            "actions": [
+              {
+                "action": "验证文件",
+                "description": "审核并确认文件的有效性",
+                "fields": [
+                  {"field": "文件状态", "type": "select", "options": ["验证通过", "验证失败", "需补充"]}
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "output": {
+      "documents_verified": {
+        "type": "boolean",
+        "description": "所有文件是否通过验证"
+      }
+    },
+    "exceptions": [
+      {
+        "condition": "文件不完整",
+        "action": "请求补充文件",
+        "output": {
+          "additional_documents_requested": "boolean"
+        }
+      }
+    ]
+  },
+  "training_process": {
+    "input": {
+      "employee_info": {
+        "type": "object",
+        "description": "员工信息，包括员工ID、岗位、入职日期等"
+      },
+      "training_materials": {
+        "type": "array",
+        "description": "培训材料列表"
+      }
+    },
+    "process_steps": [
+      {
+        "step": "培训材料准备",
+        "description": "准备和审查培训所需的材料",
+        "roles": [
+          {
+            "role": "培训管理员",
+            "permissions": [
+              "上传培训材料",
+              "审核培训材料"
+            ]
+          }
+        ],
+        "ui_elements": [
+          {
+            "element": "培训材料上传界面",
+            "description": "允许培训管理员上传和更新培训材料",
+            "type": "upload",
+            "authorized_roles": ["培训管理员"],
+            "actions": [
+              {
+                "action": "上传材料",
+                "description": "上传新的或更新现有的培训材料",
+                "fields": [
+                  {"field": "选择文件", "type": "file"},
+                  {"field": "材料描述", "type": "text"}
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "step": "培训会议安排",
+        "description": "安排培训会议和通知参与人员",
+        "roles": [
+          {
+            "role": "培训管理员",
+            "permissions": [
+              "创建培训会议",
+              "修改培训会议",
+              "取消培训会议"
+            ]
+          },
+          {
+            "role": "新员工",
+            "permissions": [
+              "查看培训会议",
+              "确认参加培训会议"
+            ]
+          }
+        ],
+        "ui_elements": [
+          {
+            "element": "培训会议日程",
+            "description": "展示即将进行的培训会议的时间、地点和内容",
+            "type": "calendar",
+            "authorized_roles": ["培训管理员", "新员工"],
+            "actions": [
+              {
+                "action": "添加会议",
+                "description": "为新员工安排一个新的培训会议",
+                "authorized_roles": ["培训管理员"],
+                "fields": [
+                  {"field": "日期", "type": "date"},
+                  {"field": "时间", "type": "time"},
+                  {"field": "地点", "type": "text"},
+                  {"field": "培训内容", "type": "text"}
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "output": {
+      "training_completed": {
+        "type": "boolean",
+        "description": "员工是否完成了所有的培训课程"
+      }
+    },
+    "exceptions": [
+      {
+        "condition": "培训材料缺失",
+        "action": "通知培训管理员补充材料",
+        "output": {
+          "notification_sent": "boolean"
+        },
+        "handled_by": ["培训管理员"]
+      },
+      {
+        "condition": "员工未能参加培训",
+        "action": "重新安排培训",
+        "output": {
+          "training_rescheduled": "boolean"
+        },
+        "handled_by": ["培训管理员"]
+      }
+    ]
+  }
+}
